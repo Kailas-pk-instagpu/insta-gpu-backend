@@ -1,0 +1,20 @@
+{
+  "name": "insta-gpu-backend",
+  "version": "1.0.0",
+  "description": "Microservice backend for the Cloud GPU SaaS, targeting two roles: **Cafe Owner** and **Manager**.\r Frontend is the existing React app in the repo root; this folder is a self-contained backend you run with Docker.",
+  "homepage": "https://github.com/Kailas-pk-instagpu/insta-gpu-backend#readme",
+  "bugs": {
+    "url": "https://github.com/Kailas-pk-instagpu/insta-gpu-backend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kailas-pk-instagpu/insta-gpu-backend.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

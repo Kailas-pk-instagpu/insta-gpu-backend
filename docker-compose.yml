@@ -1,0 +1,106 @@
+version: "3.9"
+
+services:
+  insta-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: insta_gpu
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5432:5432"]
+    volumes:
+      - ./db/insta_gpu.sql:/docker-entrypoint-initdb.d/init.sql
+      - insta_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d insta_gpu"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  auth-service:
+    build: ./auth-service
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgres://postgres:postgres@insta-db:5432/insta_gpu
+      JWT_SECRET: cloudgpu_super_secret_jwt_key
+      REDIS_URL: redis://redis:6379
+      BCRYPT_ROUNDS: 10
+    ports: ["3001:3001"]
+    depends_on:
+      insta-db: { condition: service_healthy }
+      redis:   { condition: service_healthy }
+
+  session-service:
+    build: ./session-service
+    environment:
+      PORT: 3002
+      DATABASE_URL: postgres://postgres:postgres@insta-db:5432/insta_gpu
+      REDIS_URL: redis://redis:6379
+    ports: ["3002:3002"]
+    depends_on:
+      insta-db:    { condition: service_healthy }
+      redis:      { condition: service_healthy }
+
+  cafe-mgmt-service:
+    build: ./cafe-mgmt-service
+    environment:
+      PORT: 3003
+      DATABASE_URL: postgres://postgres:postgres@insta-db:5432/insta_gpu
+      REDIS_URL: redis://redis:6379
+    ports: ["3003:3003"]
+    depends_on:
+      insta-db:    { condition: service_healthy }
+      redis:      { condition: service_healthy }
+
+  gpu-metrics-worker:
+    build: ./gpu-metrics-worker
+    environment:
+      PORT: 8000
+      DATABASE_URL: postgresql://postgres:postgres@insta-db:5432/insta_gpu
+      REDIS_URL: redis://redis:6379
+      POLL_INTERVAL_SECONDS: 60
+    ports: ["8000:8000"]
+    depends_on:
+      insta-db: { condition: service_healthy }
+      redis:   { condition: service_healthy }
+
+  settlement-worker:
+    build: ./settlement-worker
+    environment:
+      PORT: 8001
+      DATABASE_URL: postgresql://postgres:postgres@insta-db:5432/insta_gpu
+      REDIS_URL: redis://redis:6379
+    ports: ["8001:8001"]
+    depends_on:
+      insta-db: { condition: service_healthy }
+      redis:      { condition: service_healthy }
+
+  gateway:
+    build: ./api-gateway-service
+    environment:
+      PORT: 3000
+      JWT_SECRET: cloudgpu_super_secret_jwt_key
+      AUTH_SERVICE_URL: http://auth-service:3001
+      SESSION_SERVICE_URL: http://session-service:3002
+      CAFE_MGMT_SERVICE_URL: http://cafe-mgmt-service:3003
+      SETTLEMENT_WORKER_URL: http://settlement-worker:8001
+      REDIS_URL: redis://redis:6379
+    ports: ["3000:3000"]
+    depends_on:
+      - auth-service
+      - session-service
+      - cafe-mgmt-service
+      - settlement-worker
+      - gpu-metrics-worker
+
+volumes:
+  insta_db_data:
