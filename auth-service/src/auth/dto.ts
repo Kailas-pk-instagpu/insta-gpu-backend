@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class LoginDto {
   @IsEmail() email: string;
@@ -11,12 +11,12 @@ export class Verify2faDto {
 }
 
 export class UpdateProfileDto {
-  name?: string;
-  phone?: string;
-  address?: string;
-  avatar_url?: string;
+  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsOptional() @IsString() avatar_url?: string;
 }
 
 export class Toggle2faDto {
-  enable: boolean;
+  @IsBoolean() enable: boolean;
 }

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
@@ -24,6 +25,9 @@ import { WebSocketGateway, WebSocketServer, OnGatewayInit } from '@nestjs/websoc
 import { Server } from 'socket.io';
 import axios from 'axios';
 import type { Request, Response } from 'express';
+import { AllExceptionsFilter } from './common/all-exceptions.filter';
+import { ResponseInterceptor } from './common/response.interceptor';
+import { ApiResponse } from './common/response.util';
 
 const TARGETS: Record<string, string> = {
   '/api/auth': process.env.AUTH_SERVICE_URL,
@@ -39,10 +43,6 @@ const TARGETS: Record<string, string> = {
   '/api/dashboard/owner': process.env.CAFE_MGMT_SERVICE_URL,
 };
 
-import { AllExceptionsFilter } from './common/all-exceptions.filter';
-import { ResponseInterceptor } from './common/response.interceptor';
-import { ApiResponse } from './common/response.util';
-
 const PUBLIC_PATHS = ['/api/auth/login', '/api/auth/verify-2fa', '/health'];
 
 const ROLE_PREFIXES: { prefix: string; roles: string[] }[] = [
@@ -57,7 +57,7 @@ export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private reflector: Reflector, private jwt: JwtService) {}
+  constructor(private reflector: Reflector, private jwt: JwtService) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -130,11 +130,12 @@ class ProxyService {
 
     const headers: Record<string, string> = {
       'content-type': req.headers['content-type'] as string || 'application/json',
+      ...(req.headers['authorization'] ? { authorization: req.headers['authorization'] as string } : {}),
     };
     if (payload) {
-      headers['x-user-id'] = payload.sub;
+      headers['x-user-id'] = payload.userId;
       headers['x-user-role'] = payload.role;
-      if (payload.branch_id) headers['x-user-branch'] = payload.branch_id;
+      if (payload.branchId) headers['x-user-branch'] = payload.branchId;
     }
 
     try {

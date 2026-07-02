@@ -9,6 +9,7 @@ import { BranchesController } from './branches.controller';
 import { DashboardController } from './dashboard.controller';
 import { SettlementsController } from './settlements.controller';
 import { AUTH_POOL, SESSION_POOL } from './types';
+import { ResponseInterceptor } from './response.interceptor';
 
 
 
@@ -20,18 +21,18 @@ import { AUTH_POOL, SESSION_POOL } from './types';
   ],
   exports: [AUTH_POOL, SESSION_POOL],
 })
-class DbModule {}
+class DbModule { }
 
 @Controller('health')
 class HealthController {
-  @Get() h() { return { status:'ok', service:'cafe-mgmt-service', timestamp:new Date().toISOString() }; }
+  @Get() h() { return { status: 'ok', service: 'cafe-mgmt-service', timestamp: new Date().toISOString() }; }
 }
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), DbModule],
   controllers: [BranchesController, DashboardController, SettlementsController, HealthController],
 })
-class AppModule {}
+class AppModule { }
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());

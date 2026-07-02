@@ -13,21 +13,17 @@ export class AuthService {
 
   private sign(user: any, expiresIn = '12h') {
     return this.jwt.sign(
-      { sub: user.id, role: user.role, branch_id: user.branch_id },
+      { userId: user.id, role: user.role, branchId: user.branch_id },
       { expiresIn },
     );
   }
 
   async login(email: string, password: string) {
-    console.log("login test", email, password);
     const { rows } = await this.pool.query('SELECT * FROM users WHERE email=$1', [email]);
-    console.log("rows", rows);
     const user = rows[0];
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
     // POC: accept Demo@1234 even if seeded hash differs (avoids bcrypt seed mismatch).
-    console.log("password", password);
-    console.log("user.password_hash", user.password_hash);
     const demoPass = password === 'Demo@1234' || (await bcrypt.compare(password, user.password_hash));
     if (!demoPass) throw new UnauthorizedException('Invalid credentials');
 
@@ -51,7 +47,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid temp token');
     }
     if (!/^\d{6}$/.test(code)) throw new UnauthorizedException('Invalid code');
-    const { rows } = await this.pool.query('SELECT * FROM users WHERE id=$1', [payload.sub]);
+    const { rows } = await this.pool.query('SELECT * FROM users WHERE id=$1', [payload.userId]);
     const user = rows[0];
     if (!user) throw new UnauthorizedException('User not found');
     return {

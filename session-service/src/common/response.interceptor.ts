@@ -7,7 +7,9 @@ import { ApiResponse } from './response.util';
 export class ResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
+    const method = request.method || request.raw?.method;
     const path = request.url || request.raw?.url;
+    console.log(`[session-service] ${method} ${path}`);
     return next.handle().pipe(
       map((res) => ({
         success: true,
