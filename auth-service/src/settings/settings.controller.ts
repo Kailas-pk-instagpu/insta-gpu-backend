@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Req } from '@nestjs/common';
 import { ProfileService } from '../profile/profile.service';
-import { Toggle2faDto } from '../auth/dto';
+import { Toggle2faDto } from '../auth/auth.dto';
 import { ApiResponse } from '../common/response.util';
 
 @Controller('settings/2fa')

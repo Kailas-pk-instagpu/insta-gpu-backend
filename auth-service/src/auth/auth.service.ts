@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 import { PG_POOL } from '../db/db.module';
+import { LoginResponse, Verify2faResponse } from './auth.interface';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,7 @@ export class AuthService {
     );
   }
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string): Promise<LoginResponse> {
     const { rows } = await this.pool.query('SELECT * FROM users WHERE email=$1', [email]);
     const user = rows[0];
     if (!user) throw new UnauthorizedException('Invalid credentials');
@@ -34,12 +35,13 @@ export class AuthService {
       };
     }
     return {
+      requires2fa: false,
       token: this.sign(user),
       user: { id: user.id, name: user.name, role: user.role, branch_id: user.branch_id },
     };
   }
 
-  async verify2fa(tempToken: string, code: string) {
+  async verify2fa(tempToken: string, code: string): Promise<Verify2faResponse> {
     let payload: any;
     try {
       payload = this.jwt.verify(tempToken);
@@ -54,5 +56,10 @@ export class AuthService {
       token: this.sign(user),
       user: { id: user.id, name: user.name, role: user.role, branch_id: user.branch_id },
     };
+  }
+
+  async logout() {
+    // POC: Stateless logout. In production, we'd add the token to a blocklist or delete the session from DB.
+    return { success: true };
   }
 }
