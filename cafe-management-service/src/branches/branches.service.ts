@@ -1,25 +1,22 @@
-import { Controller, Get, Headers, Inject, Param } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
-import { AUTH_POOL, SESSION_POOL } from './types';
-import { ApiResponse } from './response.util';
+import { AUTH_POOL, SESSION_POOL } from '../common/interfaces/types';
 
-@Controller('branches')
-export class BranchesController {
+@Injectable()
+export class BranchesService {
   constructor(
     @Inject(AUTH_POOL) private auth: Pool,
     @Inject(SESSION_POOL) private session: Pool,
   ) {}
 
-  /** List branches scoped to caller role. */
-  @Get()
-  async list(@Headers('x-user-id') userId: string, @Headers('x-user-role') role: string) {
+  async listBranches(userId: string, role: string) {
     let branches: any[];
     if (role === 'cafe_owner') {
       ({ rows: branches } = await this.auth.query(
         `SELECT * FROM branches WHERE owner_id=$1`, [userId]));
     } else {
       const { rows: u } = await this.auth.query(`SELECT branch_id FROM users WHERE id=$1`, [userId]);
-      if (!u[0]?.branch_id) return new ApiResponse([], 'No branches found');
+      if (!u[0]?.branch_id) return [];
       ({ rows: branches } = await this.auth.query(`SELECT * FROM branches WHERE id=$1`, [u[0].branch_id]));
     }
 
@@ -37,12 +34,10 @@ export class BranchesController {
         revenue_today: Number(rev[0].r).toFixed(2),
       });
     }
-    return new ApiResponse(out, 'Branches fetched successfully');
+    return out;
   }
 
-  /** List seats for a branch, joining live session data. */
-  @Get(':id/seats')
-  async seats(@Param('id') branchId: string) {
+  async listSeats(branchId: string) {
     const { rows: seats } = await this.auth.query(
       `SELECT id, seat_number, gpu_model, status FROM seats WHERE branch_id=$1 ORDER BY seat_number`,
       [branchId],
@@ -63,7 +58,6 @@ export class BranchesController {
         });
       }
     }
-    const data = seats.map(s => ({ ...s, ...(active.has(s.id) ? { active_session: active.get(s.id) } : {}) }));
-    return new ApiResponse(data, 'Seats fetched successfully');
+    return seats.map(s => ({ ...s, ...(active.has(s.id) ? { active_session: active.get(s.id) } : {}) }));
   }
 }

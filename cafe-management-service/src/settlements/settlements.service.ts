@@ -1,23 +1,20 @@
-import { Controller, Get, Headers, Inject, Query } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
-import { AUTH_POOL, SESSION_POOL } from './types';
-import { ApiResponse } from './response.util';
+import { AUTH_POOL, SESSION_POOL } from '../common/interfaces/types';
 
-@Controller('settlements')
-export class SettlementsController {
+@Injectable()
+export class SettlementsService {
   constructor(
     @Inject(AUTH_POOL) private auth: Pool,
     @Inject(SESSION_POOL) private session: Pool,
   ) {}
 
-  /** Paginated settlements, scoped by role. */
-  @Get()
-  async list(
-    @Headers('x-user-id') userId: string,
-    @Headers('x-user-role') role: string,
-    @Headers('x-user-branch') branchHeader: string,
-    @Query('page') pageStr = '1',
-    @Query('limit') limitStr = '10',
+  async listSettlements(
+    userId: string,
+    role: string,
+    branchHeader: string,
+    pageStr = '1',
+    limitStr = '10',
   ) {
     const page = Math.max(1, Number(pageStr) || 1);
     const limit = Math.min(100, Math.max(1, Number(limitStr) || 10));
@@ -31,7 +28,7 @@ export class SettlementsController {
       branchIds = branchHeader ? [branchHeader] : [];
     }
     if (!branchIds.length) {
-      return new ApiResponse({ items: [], total: 0, page, limit }, 'No branches found');
+      return { items: [], total: 0, page, limit };
     }
 
     const { rows: totalRow } = await this.session.query(
@@ -55,7 +52,7 @@ export class SettlementsController {
       for (const s of seats) seatMap.set(s.id, s.seat_number);
     }
 
-    const data = {
+    return {
       items: rows.map(r => ({
         id: r.id, session_id: r.session_id,
         amount: Number(r.amount).toFixed(2),
@@ -69,6 +66,5 @@ export class SettlementsController {
       page,
       limit,
     };
-    return new ApiResponse(data, 'Settlements fetched successfully');
   }
 }

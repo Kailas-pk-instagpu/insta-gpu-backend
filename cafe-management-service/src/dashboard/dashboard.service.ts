@@ -1,27 +1,23 @@
-import { Controller, Get, Headers, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
-import { AUTH_POOL, SESSION_POOL } from './types';
-import { ApiResponse } from './response.util';
+import { AUTH_POOL, SESSION_POOL } from '../common/interfaces/types';
 
-@Controller('dashboard')
-export class DashboardController {
+@Injectable()
+export class DashboardService {
   constructor(
     @Inject(AUTH_POOL) private auth: Pool,
     @Inject(SESSION_POOL) private session: Pool,
   ) {}
 
-  /** Cafe-owner dashboard: aggregate KPIs across owned branches. */
-  @Get('owner')
-  async owner(@Headers('x-user-id') ownerId: string) {
+  async getOwnerDashboard(ownerId: string) {
     const { rows: branches } = await this.auth.query(
       `SELECT * FROM branches WHERE owner_id=$1`, [ownerId]);
     const branchIds = branches.map(b => b.id);
     if (!branchIds.length) {
-      const emptyData = {
+      return {
         total_revenue_today: '0.00', total_revenue_week: '0.00',
         active_sessions: 0, total_sessions_today: 0, branches: [],
       };
-      return new ApiResponse(emptyData, 'No branches found for owner');
     }
 
     const { rows: today } = await this.session.query(
@@ -57,13 +53,12 @@ export class DashboardController {
       });
     }
 
-    const data = {
+    return {
       total_revenue_today: Number(today[0].r).toFixed(2),
       total_revenue_week: Number(week[0].r).toFixed(2),
       active_sessions: act[0].c,
       total_sessions_today: tot[0].c,
       branches: perBranch,
     };
-    return new ApiResponse(data, 'Owner dashboard data fetched successfully');
   }
 }

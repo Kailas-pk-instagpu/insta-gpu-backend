@@ -2,7 +2,7 @@ import { Body, Controller, Get, Patch, Req } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './profile.dto';
 import { ProfileResponse } from './profile.interface';
-import { ApiResponse } from 'src/common/response.util';
+import { ApiResponse } from 'src/common/utils/response.util';
 
 @Controller('profile')
 export class ProfileController {

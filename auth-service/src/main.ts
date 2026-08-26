@@ -3,8 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './common/all-exceptions.filter';
-import { ResponseInterceptor } from './common/response.interceptor';
+import { AllExceptionsFilter } from './common/utils/all-exceptions.filter';
+import { ResponseInterceptor } from './common/utils/response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
