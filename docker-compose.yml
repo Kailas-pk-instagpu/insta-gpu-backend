@@ -51,7 +51,7 @@ services:
       redis:      { condition: service_healthy }
 
   cafe-mgmt-service:
-    build: ./cafe-mgmt-service
+    build: ./cafe-management-service
     environment:
       PORT: 3003
       DATABASE_URL: postgres://postgres:postgres@insta-db:5432/insta_gpu
@@ -60,6 +60,12 @@ services:
     depends_on:
       insta-db:    { condition: service_healthy }
       redis:      { condition: service_healthy }
+
+  integration-service:
+    build: ./integration-service
+    environment:
+      PORT: 3004
+    ports: ["3004:3004"]
 
   gpu-metrics-worker:
     build: ./gpu-metrics-worker
@@ -93,6 +99,7 @@ services:
       SESSION_SERVICE_URL: http://session-service:3002
       CAFE_MGMT_SERVICE_URL: http://cafe-mgmt-service:3003
       SETTLEMENT_WORKER_URL: http://settlement-worker:8001
+      INTEGRATION_SERVICE_URL: http://integration-service:3004
       REDIS_URL: redis://redis:6379
     ports: ["3000:3000"]
     depends_on:
@@ -101,6 +108,7 @@ services:
       - cafe-mgmt-service
       - settlement-worker
       - gpu-metrics-worker
+      - integration-service
 
 volumes:
   insta_db_data:
