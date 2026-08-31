@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Patch, Req } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req } from '@nestjs/common';
 import { ProfileService } from './profile.service';
-import { UpdateProfileDto } from './profile.dto';
-import { ProfileResponse } from './profile.interface';
-import { ApiResponse } from 'src/common/utils/response.util';
+import { UpdateProfileDto } from '../dtos/profile.dto';
+import { ProfileResponse } from '../interface/profile.interface';
+import { ApiResponse } from 'src/utils/response.util';
+import { Toggle2faDto } from 'src/dtos/auth.dto';
 
 @Controller('profile')
 export class ProfileController {
@@ -22,5 +23,13 @@ export class ProfileController {
     const userId = req.user.userId;
     const data = await this.profileService.update(userId, dto as any);
     return new ApiResponse(data, 'Profile updated successfully');
+  }
+
+  /** Enable or disable 2FA for the current user. */
+  @Post('toggle-2fa')
+  async toggle2fa(@Req() req: any, @Body() dto: Toggle2faDto) {
+    const userId = req.user.userId;
+    const data = await this.profileService.toggle2fa(userId, dto.enable);
+    return new ApiResponse(data, '2FA settings updated successfully');
   }
 }

@@ -5,9 +5,9 @@ import { AUTH_POOL, SESSION_POOL } from '../common/interfaces/types';
 @Injectable()
 export class SettlementsService {
   constructor(
-    @Inject(AUTH_POOL) private auth: Pool,
     @Inject(SESSION_POOL) private session: Pool,
-  ) {}
+    @Inject(AUTH_POOL) private auth: Pool,
+  ) { }
 
   async listSettlements(
     userId: string,

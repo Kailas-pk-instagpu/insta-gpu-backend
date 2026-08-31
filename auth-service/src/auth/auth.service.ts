@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 import { PG_POOL } from '../db/db.module';
-import { LoginResponse, Verify2faResponse } from './auth.interface';
+import { LoginResponse, Verify2faResponse } from '../interface/auth.interface';
 
 @Injectable()
 export class AuthService {

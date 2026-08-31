@@ -1,9 +1,9 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, Verify2faDto } from './auth.dto';
-import { LoginResponse, Verify2faResponse } from './auth.interface';
-import { Public } from '../common/utils/public.decorator';
-import { ApiResponse } from '../common/utils/response.util';
+import { LoginDto, Verify2faDto } from '../dtos/auth.dto';
+import { LoginResponse, Verify2faResponse } from '../interface/auth.interface';
+import { Public } from '../utils/public.decorator';
+import { ApiResponse } from '../utils/response.util';
 
 @Controller('auth')
 export class AuthController {

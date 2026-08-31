@@ -6,10 +6,9 @@ import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { ProfileController } from './profile/profile.controller';
 import { ProfileService } from './profile/profile.service';
-import { SettingsController } from './settings/settings.controller';
-import { HealthController } from './common/utils/health.controller';
+import { HealthController } from './utils/health.controller';
 import { APP_GUARD } from '@nestjs/core';
-import { AuthGuard } from './common/utils/auth.guard';
+import { AuthGuard } from './utils/auth.guard';
 
 @Module({
   imports: [
@@ -20,7 +19,7 @@ import { AuthGuard } from './common/utils/auth.guard';
     }),
     DbModule,
   ],
-  controllers: [AuthController, ProfileController, SettingsController, HealthController],
+  controllers: [AuthController, ProfileController, HealthController],
   providers: [
     AuthService,
     ProfileService,
