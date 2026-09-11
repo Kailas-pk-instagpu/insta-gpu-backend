@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
-  role TEXT CHECK (role IN ('cafe_owner', 'manager')) NOT NULL,
+  role TEXT CHECK (role IN ('super_admin', 'admin', 'cafe_owner', 'manager')) NOT NULL,
   name TEXT,
   phone TEXT,
   address TEXT,
@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
   two_fa_enabled BOOLEAN DEFAULT false,
   two_fa_secret TEXT,
   branch_id UUID,
+  cafe_id TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -24,17 +25,46 @@ CREATE TABLE IF NOT EXISTS branches (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   location TEXT,
-  status TEXT CHECK (status IN ('active','inactive')) DEFAULT 'active',
+  address TEXT,
+  cafe_id TEXT,
+  total_seats INT DEFAULT 0,
+  status TEXT CHECK (status IN ('active', 'inactive', 'maintenance')) DEFAULT 'active',
   owner_id UUID REFERENCES users(id),
-  created_at TIMESTAMPTZ DEFAULT now()
+  admin_id UUID REFERENCES users(id),
+  cafe_owner_id UUID REFERENCES users(id),
+  manager_id UUID REFERENCES users(id),
+  hourly_rate NUMERIC(10,2) DEFAULT 5.00,
+  currency TEXT DEFAULT 'USD',
+  daily_spend_limit NUMERIC(10,2) NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS seats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  branch_id UUID REFERENCES branches(id),
+  branch_id UUID REFERENCES branches(id) ON DELETE CASCADE,
   seat_number INT NOT NULL,
+  label TEXT,
   gpu_model TEXT NOT NULL,
-  status TEXT CHECK (status IN ('available','occupied','maintenance')) DEFAULT 'available',
+  status TEXT CHECK (status IN ('available', 'occupied', 'maintenance')) DEFAULT 'available',
+  player_name TEXT,
+  start_time TIMESTAMPTZ,
+  end_time TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  CONSTRAINT uq_seats_branch_number UNIQUE (branch_id, seat_number)
+);
+
+CREATE TABLE IF NOT EXISTS seat_activity_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  seat_id UUID REFERENCES seats(id) ON DELETE SET NULL,
+  seat_number INT NOT NULL,
+  branch_id UUID NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+  field TEXT CHECK (field IN ('label', 'gpuModel', 'status')) NOT NULL,
+  from_value TEXT,
+  to_value TEXT,
+  actor_id TEXT,
+  actor_role TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

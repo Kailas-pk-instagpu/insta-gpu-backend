@@ -35,6 +35,7 @@ const TARGETS: Record<string, string> = {
   '/api/settings': process.env.AUTH_SERVICE_URL,
   '/api/owner': process.env.CAFE_MGMT_SERVICE_URL,
   '/api/branches': process.env.CAFE_MGMT_SERVICE_URL,
+  '/api/seats': process.env.CAFE_MGMT_SERVICE_URL,
   '/api/settlements': process.env.CAFE_MGMT_SERVICE_URL,
   '/api/dashboard/owner': process.env.CAFE_MGMT_SERVICE_URL,
 };
