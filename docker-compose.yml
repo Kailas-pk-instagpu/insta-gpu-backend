@@ -50,7 +50,7 @@ services:
       insta-db:    { condition: service_healthy }
       redis:      { condition: service_healthy }
 
-  cafe-mgmt-service:
+  cafe-management-service:
     build: ./cafe-management-service
     environment:
       PORT: 3003
