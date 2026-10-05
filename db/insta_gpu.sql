@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
   two_fa_secret TEXT,
   branch_id UUID,
   cafe_id TEXT,
+  stripe_customer_id TEXT,
+  stripe_payment_method_id TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -82,14 +84,65 @@ CREATE TABLE IF NOT EXISTS sessions (
   status TEXT CHECK (status IN ('active','completed')) DEFAULT 'active'
 );
 
+-- Daily automated card billing (one invoice per branch per calendar day)
+CREATE TABLE IF NOT EXISTS invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  branch_id UUID NOT NULL REFERENCES branches(id),
+  date DATE NOT NULL,
+  total_amount NUMERIC(10,2) NOT NULL,
+  currency TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'charging', 'paid', 'failed', 'needs_reauth', 'missed')),
+  stripe_payment_intent_id TEXT,
+  attempt_count INT NOT NULL DEFAULT 0,
+  last_error TEXT,
+  last_attempted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  paid_at TIMESTAMPTZ,
+  CONSTRAINT uq_invoices_branch_date UNIQUE (branch_id, date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
+CREATE INDEX IF NOT EXISTS idx_invoices_branch ON invoices(branch_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_retry
+  ON invoices(status, attempt_count, last_attempted_at)
+  WHERE status = 'failed';
+
+-- Dedup: one spend-limit alert per branch per calendar day
+CREATE TABLE IF NOT EXISTS spend_limit_alerts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  branch_id UUID NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+  alert_date DATE NOT NULL,
+  daily_spend_limit NUMERIC(10,2) NOT NULL,
+  running_total NUMERIC(10,2) NOT NULL,
+  currency TEXT NOT NULL,
+  notified_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT uq_spend_limit_alerts_branch_date UNIQUE (branch_id, alert_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_spend_limit_alerts_branch
+  ON spend_limit_alerts(branch_id, alert_date DESC);
+
+-- Cash path: payment_method='cash', invoice_id NULL
+-- Card path: payment_method='card', invoice_id set after successful nightly charge
 CREATE TABLE IF NOT EXISTS settlements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id UUID REFERENCES sessions(id),
   branch_id UUID NOT NULL,
   amount NUMERIC(10,2) NOT NULL,
   payment_method TEXT DEFAULT 'cash',
+  invoice_id UUID REFERENCES invoices(id),
   settled_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- One settlement per session (cash or card) — prevents double-billing
+CREATE UNIQUE INDEX IF NOT EXISTS uq_settlements_session_id
+  ON settlements(session_id)
+  WHERE session_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_settlements_invoice_id
+  ON settlements(invoice_id)
+  WHERE invoice_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS seed_seat_map (
   seat_number INT PRIMARY KEY,

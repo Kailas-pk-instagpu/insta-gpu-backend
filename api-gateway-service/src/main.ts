@@ -37,6 +37,7 @@ const TARGETS: Record<string, string> = {
   '/api/branches': process.env.CAFE_MGMT_SERVICE_URL,
   '/api/seats': process.env.CAFE_MGMT_SERVICE_URL,
   '/api/settlements': process.env.CAFE_MGMT_SERVICE_URL,
+  '/api/billing': process.env.CAFE_MGMT_SERVICE_URL,
   '/api/dashboard/owner': process.env.CAFE_MGMT_SERVICE_URL,
 };
 
@@ -45,6 +46,7 @@ const PUBLIC_PATHS = ['/api/auth/login', '/api/auth/verify-2fa', '/health'];
 const ROLE_PREFIXES: { prefix: string; roles: string[] }[] = [
   { prefix: '/api/owner', roles: ['cafe_owner'] },
   { prefix: '/api/dashboard/owner', roles: ['cafe_owner'] },
+  { prefix: '/api/billing', roles: ['cafe_owner', 'admin', 'super_admin'] },
 ];
 
 export const IS_PUBLIC_KEY = 'isPublic';

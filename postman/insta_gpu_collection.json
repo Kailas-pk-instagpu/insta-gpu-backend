@@ -1,0 +1,554 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "InstaGPU API Gateway Collection",
+    "description": "Exclusively routes all API calls through API Gateway (http://localhost:3000).\nCovers Auth, Profile, Branch Management, Seat Operations, and Activity Audit Trail.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "branchId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "seatId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "temp2faToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication & Profile",
+      "item": [
+        {
+          "name": "Login (Cafe Owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('authToken', res.data.token);",
+                  "  console.log('Saved authToken for Cafe Owner');",
+                  "} else if (res.data && res.data.requires2fa) {",
+                  "  pm.collectionVariables.set('temp2faToken', res.data.tempToken);",
+                  "  console.log('Saved temp2faToken');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner@demo.com\",\n  \"password\": \"Demo@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Logs in via API Gateway. Automatically extracts and stores 'authToken' for subsequent requests."
+          }
+        },
+        {
+          "name": "Login (Manager)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('authToken', res.data.token);",
+                  "  console.log('Saved authToken for Manager');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"manager1@demo.com\",\n  \"password\": \"Demo@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Logs in as manager via API Gateway. Updates collection variable 'authToken'."
+          }
+        },
+        {
+          "name": "Verify 2FA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('authToken', res.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tempToken\": \"{{temp2faToken}}\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify-2fa",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "verify-2fa"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alex Rivera\",\n  \"phone\": \"+1-555-0199\",\n  \"address\": \"456 Main St, New York, NY\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Toggle 2FA",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enable\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/toggle-2fa",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile", "toggle-2fa"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Branches",
+      "item": [
+        {
+          "name": "Get Predefined GPU Models",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/branches/gpu-models",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches", "gpu-models"]
+            },
+            "description": "Returns fixed, predefined list of GPU models matching frontend GPU_MODEL_OPTIONS dropdown."
+          }
+        },
+        {
+          "name": "Create Branch + Provision Seats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('branchId', res.data.id);",
+                  "  console.log('Saved branchId:', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cyber Arena Tokyo\",\n  \"address\": \"Shibuya Crossing 101, Tokyo\",\n  \"cafeId\": \"tokyo-cafe-chain\",\n  \"totalSeats\": 10,\n  \"defaultGpuModel\": \"RTX 4070\",\n  \"hourlyRate\": 7.50,\n  \"currency\": \"USD\",\n  \"dailySpendLimit\": 250.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/branches",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches"]
+            },
+            "description": "Creates branch and provisions totalSeats initial seats via API Gateway."
+          }
+        },
+        {
+          "name": "List Branches (Scoped by Role)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && Array.isArray(res.data) && res.data.length > 0) {",
+                  "  pm.collectionVariables.set('branchId', res.data[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/branches",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches"]
+            },
+            "description": "Gateway resolves user token and injects RBAC headers. Returns list of branches scoped to the caller."
+          }
+        },
+        {
+          "name": "Get Branch Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/branches/{{branchId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches", "{{branchId}}"]
+            },
+            "description": "Returns single branch detail in frontend camelCase shape."
+          }
+        },
+        {
+          "name": "Update Branch & Sync Seat Count",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cyber Arena Tokyo (Premium)\",\n  \"totalSeats\": 12,\n  \"defaultGpuModel\": \"RTX 4080\",\n  \"hourlyRate\": 8.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/branches/{{branchId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches", "{{branchId}}"]
+            },
+            "description": "Updates branch metadata. If totalSeats changes, syncs seats (provisions new seats or removes non-occupied excess seats)."
+          }
+        },
+        {
+          "name": "Update Branch Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"maintenance\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/branches/{{branchId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches", "{{branchId}}", "status"]
+            },
+            "description": "Updates status to 'active', 'inactive', or 'maintenance'."
+          }
+        },
+        {
+          "name": "Update Daily Spend Limit",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dailySpendLimit\": 350.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/branches/{{branchId}}/spend-limit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches", "{{branchId}}", "spend-limit"]
+            },
+            "description": "Updates dailySpendLimit threshold for this branch."
+          }
+        },
+        {
+          "name": "Provision Seats On-Demand",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"count\": 3,\n  \"gpuModel\": \"RTX 4080\",\n  \"labelPrefix\": \"VIP-\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/branches/{{branchId}}/seats/provision",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches", "{{branchId}}", "seats", "provision"]
+            },
+            "description": "Bulk-creates N seats sequentially for the branch."
+          }
+        },
+        {
+          "name": "List Seats for Branch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && Array.isArray(res.data) && res.data.length > 0) {",
+                  "  pm.collectionVariables.set('seatId', res.data[0].id);",
+                  "  console.log('Saved seatId:', res.data[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/branches/{{branchId}}/seats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches", "{{branchId}}", "seats"]
+            },
+            "description": "Lists all seats for the branch with live session status."
+          }
+        },
+        {
+          "name": "Bulk Apply GPU to Non-Occupied Seats",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gpuModel\": \"RTX 4090\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/branches/{{branchId}}/seats/apply-gpu",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches", "{{branchId}}", "seats", "apply-gpu"]
+            },
+            "description": "Bulk applies GPU model to all non-occupied seats and writes audit log entries."
+          }
+        },
+        {
+          "name": "Get Branch Seat Activity Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/branches/{{branchId}}/seats/activity?page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches", "{{branchId}}", "seats", "activity"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Returns paginated audit trail of seat modifications in this branch."
+          }
+        },
+        {
+          "name": "Delete Branch (Blocked if Seats Exist)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/branches/{{branchId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "branches", "{{branchId}}"]
+            },
+            "description": "Enforces business rule: rejects deletion with 400 Bad Request if seats remain."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Seats",
+      "item": [
+        {
+          "name": "Get Predefined GPU Models (/seats alias)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seats/gpu-models",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "seats", "gpu-models"]
+            }
+          }
+        },
+        {
+          "name": "Occupy Seat with Player",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"occupied\",\n  \"playerName\": \"CyberPlayerOne\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/seats/{{seatId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "seats", "{{seatId}}"]
+            },
+            "description": "Sets status to 'occupied' and records player name. Logs change to seat_activity_logs."
+          }
+        },
+        {
+          "name": "Vacate Seat (Clears Player & Timestamps)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"available\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/seats/{{seatId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "seats", "{{seatId}}"]
+            },
+            "description": "Transitions seat away from 'occupied'. Automatically clears playerName, startTime, and endTime to null."
+          }
+        },
+        {
+          "name": "Update Seat Label & GPU Model",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"VIP-STREAMER-1\",\n  \"gpuModel\": \"RTX 4090\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/seats/{{seatId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "seats", "{{seatId}}"]
+            },
+            "description": "Updates display label and GPU model. Logs each field change to audit table."
+          }
+        },
+        {
+          "name": "Get Seat Activity Audit Log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seats/{{seatId}}/activity?page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "seats", "{{seatId}}", "activity"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Returns audit logs for this specific seat."
+          }
+        }
+      ]
+    }
+  ]
+}

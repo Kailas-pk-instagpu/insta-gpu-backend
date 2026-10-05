@@ -4,6 +4,7 @@ import { DbModule } from './db/db.module';
 import { BranchesModule } from './branches/branches.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SettlementsModule } from './settlements/settlements.module';
+import { BillingModule } from './billing/billing.module';
 import { HealthController } from './common/utils/health.controller';
 
 import { RedisModule } from './common/redis/redis.module';
@@ -18,6 +19,7 @@ import { SeatsModule } from './seats/seats.module';
     SeatsModule,
     DashboardModule,
     SettlementsModule,
+    BillingModule,
   ],
   controllers: [HealthController],
 })

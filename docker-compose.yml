@@ -56,16 +56,27 @@ services:
       PORT: 3003
       DATABASE_URL: postgres://postgres:postgres@insta-db:5432/insta_gpu
       REDIS_URL: redis://redis:6379
+      SETTLEMENT_WORKER_URL: http://settlement-worker:8001
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-instagpu_internal_dev_token}
     ports: ["3003:3003"]
     depends_on:
       insta-db:    { condition: service_healthy }
       redis:      { condition: service_healthy }
+      settlement-worker: { condition: service_started }
 
   integration-service:
     build: ./integration-service
     environment:
       PORT: 3004
+      DATABASE_URL: postgresql://postgres:postgres@insta-db:5432/insta_gpu
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-instagpu_internal_dev_token}
+      SETTLEMENT_WORKER_URL: http://settlement-worker:8001
     ports: ["3004:3004"]
+    depends_on:
+      insta-db: { condition: service_healthy }
+      settlement-worker: { condition: service_started }
 
   gpu-metrics-worker:
     build: ./gpu-metrics-worker
@@ -85,6 +96,10 @@ services:
       PORT: 8001
       DATABASE_URL: postgresql://postgres:postgres@insta-db:5432/insta_gpu
       REDIS_URL: redis://redis:6379
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-instagpu_internal_dev_token}
+      INTEGRATION_SERVICE_URL: http://integration-service:3004
+      MAX_CHARGE_ATTEMPTS: 3
+      RETRY_INTERVAL_HOURS: 2
     ports: ["8001:8001"]
     depends_on:
       insta-db: { condition: service_healthy }
